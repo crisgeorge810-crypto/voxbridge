@@ -1,0 +1,44 @@
+name: Build VoxBridge APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Prepare Flutter project
+        run: |
+          unzip -o voxbridge_android_prototype.zip -d source
+
+          flutter create --platforms=android voxbridge_build
+
+          cp -r source/lib voxbridge_build/
+          cp -r source/assets voxbridge_build/
+          cp source/pubspec.yaml voxbridge_build/pubspec.yaml
+
+      - name: Get dependencies
+        working-directory: voxbridge_build
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: voxbridge_build
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoxBridge-APK
+          path: voxbridge_build/build/app/outputs/flutter-apk/app-release.apk
